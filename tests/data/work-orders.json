@@ -1,0 +1,117 @@
+{
+  "standard-work-order": {
+    "docId": "wo-001",
+    "docType": "workOrder",
+    "data": {
+      "workOrderNumber": "WO001",
+      "manufacturingOrderId": "mo-001",
+      "workCenterId": "wc-001",
+      "durationMinutes": 480,
+      "setupTimeMinutes": 30,
+      "startDate": "2024-01-01T08:00:00Z",
+      "endDate": "2024-01-01T17:00:00Z",
+      "sessions": [
+        {
+          "setupTimeMinutes": 30,
+          "durationTimeMinutes": 450,
+          "startDate": "2024-01-01T08:00:00Z",
+          "endDate": "2024-01-01T17:00:00Z"
+        }
+      ],
+      "isMaintenance": false,
+      "dependsOnWorkOrderIds": []
+    }
+  },
+  "maintenance-work-order": {
+    "docId": "wo-maint-001",
+    "docType": "workOrder",
+    "data": {
+      "workOrderNumber": "WO-MAINT001",
+      "manufacturingOrderId": "mo-001",
+      "workCenterId": "wc-003",
+      "durationMinutes": 120,
+      "setupTimeMinutes": 0,
+      "startDate": "2024-01-01T10:00:00Z",
+      "endDate": "2024-01-01T12:00:00Z",
+      "sessions": [
+        {
+          "setupTimeMinutes": 0,
+          "durationTimeMinutes": 120,
+          "startDate": "2024-01-01T10:00:00Z",
+          "endDate": "2024-01-01T12:00:00Z"
+        }
+      ],
+      "isMaintenance": true,
+      "dependsOnWorkOrderIds": []
+    }
+  },
+  "weekend-work-order": {
+    "docId": "wo-weekend-001",
+    "docType": "workOrder",
+    "data": {
+      "workOrderNumber": "WO-WEEKEND001",
+      "manufacturingOrderId": "mo-001",
+      "workCenterId": "wc-002",
+      "durationMinutes": 480,
+      "setupTimeMinutes": 60,
+      "startDate": "2024-01-01T09:00:00Z",
+      "endDate": "2024-01-01T18:00:00Z",
+      "sessions": [
+        {
+          "setupTimeMinutes": 60,
+          "durationTimeMinutes": 420,
+          "startDate": "2024-01-01T09:00:00Z",
+          "endDate": "2024-01-01T18:00:00Z"
+        }
+      ],
+      "isMaintenance": false,
+      "dependsOnWorkOrderIds": []
+    }
+  },
+  "short-work-order": {
+    "docId": "wo-short-001",
+    "docType": "workOrder",
+    "data": {
+      "workOrderNumber": "WO-SHORT001",
+      "manufacturingOrderId": "mo-001",
+      "workCenterId": "wc-004",
+      "durationMinutes": 120,
+      "setupTimeMinutes": 15,
+      "startDate": "2024-01-01T08:00:00Z",
+      "endDate": "2024-01-01T10:00:00Z",
+      "sessions": [
+        {
+          "setupTimeMinutes": 15,
+          "durationTimeMinutes": 105,
+          "startDate": "2024-01-01T08:00:00Z",
+          "endDate": "2024-01-01T10:00:00Z"
+        }
+      ],
+      "isMaintenance": false,
+      "dependsOnWorkOrderIds": []
+    }
+  },
+  "long-work-order": {
+    "docId": "wo-long-001",
+    "docType": "workOrder",
+    "data": {
+      "workOrderNumber": "WO-LONG001",
+      "manufacturingOrderId": "mo-001",
+      "workCenterId": "wc-005",
+      "durationMinutes": 960,
+      "setupTimeMinutes": 45,
+      "startDate": "2024-01-01T08:00:00Z",
+      "endDate": "2024-01-02T08:00:00Z",
+      "sessions": [
+        {
+          "setupTimeMinutes": 45,
+          "durationTimeMinutes": 915,
+          "startDate": "2024-01-01T08:00:00Z",
+          "endDate": "2024-01-02T08:00:00Z"
+        }
+      ],
+      "isMaintenance": false,
+      "dependsOnWorkOrderIds": []
+    }
+  }
+}

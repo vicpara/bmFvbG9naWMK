@@ -1,0 +1,107 @@
+{
+  "description": "Simple rescheduling test: WO with 30m setup conflicts with maintenance window and gets moved later in shift",
+  "workCenters": {
+    "wc-simple": {
+      "docId": "wc-simple",
+      "docType": "workCenter",
+      "data": {
+        "name": "Simple Work Center",
+        "shifts": [
+          {
+            "dayOfWeek": 1,
+            "startHour": 8,
+            "endHour": 17
+          }
+        ],
+        "maintenanceWindows": [
+          {
+            "startDate": "2024-01-01T08:00:00Z",
+            "endDate": "2024-01-01T09:00:00Z",
+            "reason": "Morning maintenance"
+          }
+        ]
+      }
+    }
+  },
+  "workOrders": {
+    "wo-simple": {
+      "docId": "wo-simple",
+      "docType": "workOrder",
+      "data": {
+        "workOrderNumber": "WO-SIMPLE-001",
+        "manufacturingOrderId": "mo-simple",
+        "workCenterId": "wc-simple",
+        "durationMinutes": 120,
+        "setupTimeMinutes": 30,
+        "startDate": "2024-01-01T08:00:00Z",
+        "endDate": "2024-01-01T10:30:00Z",
+        "sessions": [
+          {
+            "setupTimeMinutes": 30,
+            "durationTimeMinutes": 90,
+            "startDate": "2024-01-01T08:00:00Z",
+            "endDate": "2024-01-01T10:30:00Z"
+          }
+        ],
+        "isMaintenance": false,
+        "dependsOnWorkOrderIds": []
+      }
+    }
+  },
+  "manufacturingOrders": {
+    "mo-simple": {
+      "docId": "mo-simple",
+      "docType": "manufacturingOrder",
+      "data": {
+        "manufacturingOrderNumber": "MO-SIMPLE-001",
+        "itemId": "ITEM-SIMPLE",
+        "quantity": 50,
+        "dueDate": "2024-01-15T17:00:00Z"
+      }
+    }
+  },
+  "expectedResult": {
+    "updatedWorkOrders": [
+      {
+        "docId": "wo-simple",
+        "docType": "workOrder",
+        "data": {
+          "workOrderNumber": "WO-SIMPLE-001",
+          "manufacturingOrderId": "mo-simple",
+          "workCenterId": "wc-simple",
+          "durationMinutes": 120,
+          "setupTimeMinutes": 30,
+          "startDate": "2024-01-01T09:00:00Z",
+          "endDate": "2024-01-01T11:30:00Z",
+          "sessions": [
+            {
+              "setupTimeMinutes": 30,
+              "durationTimeMinutes": 90,
+              "startDate": "2024-01-01T09:00:00Z",
+              "endDate": "2024-01-01T11:30:00Z"
+            }
+          ],
+          "isMaintenance": false,
+          "dependsOnWorkOrderIds": []
+        }
+      }
+    ],
+    "changes": [
+      {
+        "workOrderId": "wo-simple",
+        "originalStartDate": "2024-01-01T08:00:00Z",
+        "originalEndDate": "2024-01-01T10:30:00Z",
+        "newStartDate": "2024-01-01T09:00:00Z",
+        "newEndDate": "2024-01-01T11:30:00Z",
+        "reason": [
+          "Maintenance window conflict",
+          "Rescheduled after maintenance completes"
+        ]
+      }
+    ],
+    "explanation": [
+      "Work order rescheduled due to maintenance window conflict",
+      "Moved from 8:00 AM to 9:00 AM (after 1-hour maintenance window)"
+    ]
+  }
+}

@@ -9,7 +9,7 @@ import type {
   WorkOrder,
 } from './types';
 import { GlobalSchedule } from './globalSchedule';
-import { Validator } from './validator';
+import { Validator, ValidationError, ImpossibleScheduleError, type ConstraintViolation } from './validator';
 
 export class ReflowService implements IReflowService {
   private workCenters: Map<string, WorkCenter>;
@@ -21,7 +21,23 @@ export class ReflowService implements IReflowService {
   }
 
   reflow(input: ReflowInput): ReflowResult {
-    const sortedNonMaintenanceWOs = ReflowService.topologicalSort(input.workOrders);
+    const violations: ConstraintViolation[] = [];
+    let sortedNonMaintenanceWOs: WorkOrder[];
+    try {
+      sortedNonMaintenanceWOs = ReflowService.topologicalSort(input.workOrders);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('Circular dependency')) {
+        violations.push({
+          code: 'CIRCULAR_DEPENDENCY',
+          workOrderId: error.message.match(/WO id: (\S+)/)?.[1] || 'unknown',
+          message: error.message,
+          details: { affectedWorkOrders: input.workOrders.map((wo) => wo.docId) },
+        });
+        throw new ImpossibleScheduleError(violations);
+      }
+      throw error;
+    }
+
     const groupedWOs = input.workOrders.reduce(
       (acc, wo) => {
         acc[wo.data.isMaintenance ? 'maintenance' : 'nonMaintenance'].push(wo);
@@ -36,20 +52,32 @@ export class ReflowService implements IReflowService {
 
     // Process maintenance work orders (fixed schedule)
     for (const workOrder of groupedWOs.maintenance) {
-      const result = this.scheduleWorkOrder(workOrder, updatedWorkOrders);
-      updatedWorkOrders.set(result.workOrder.docId, result.workOrder);
+      try {
+        const result = this.scheduleWorkOrder(workOrder, updatedWorkOrders);
+        updatedWorkOrders.set(result.workOrder.docId, result.workOrder);
+      } catch (error) {
+        violations.push(this.errorToViolation(error, workOrder));
+      }
     }
 
     // Process regular work orders in dependency order
     for (const workOrder of sortedNonMaintenanceWOs) {
-      const result = this.scheduleWorkOrder(workOrder, updatedWorkOrders);
-      updatedWorkOrders.set(result.workOrder.docId, result.workOrder);
-      if (result.wasRescheduled) {
-        changes.push(result.change!);
-        explanations.push(...(result.explanation || []));
-      } else {
-        explanations.push('Work order scheduled successfully with no conflicts');
+      try {
+        const result = this.scheduleWorkOrder(workOrder, updatedWorkOrders);
+        updatedWorkOrders.set(result.workOrder.docId, result.workOrder);
+        if (result.wasRescheduled) {
+          changes.push(result.change!);
+          explanations.push(...(result.explanation || []));
+        } else {
+          explanations.push('Work order scheduled successfully with no conflicts');
+        }
+      } catch (error) {
+        violations.push(this.errorToViolation(error, workOrder));
       }
+    }
+
+    if (violations.length > 0) {
+      throw new ImpossibleScheduleError(violations);
     }
 
     return {
@@ -57,8 +85,16 @@ export class ReflowService implements IReflowService {
         (a, b) => DateTime.fromISO(a.data.startDate).toMillis() - DateTime.fromISO(b.data.startDate).toMillis()
       ),
       changes,
-      explanation: explanations
+      explanation: explanations,
     };
+  }
+
+  private errorToViolation(error: unknown, wo: WorkOrder): ConstraintViolation {
+    if (error instanceof ValidationError) {
+      return { code: error.code, workOrderId: wo.docId, message: error.message };
+    }
+    const msg = error instanceof Error ? error.message : String(error);
+    return { code: 'SCHEDULE_FAILED', workOrderId: wo.docId, message: msg };
   }
 
   private scheduleWorkOrder(workOrder: WorkOrder, scheduledWorkOrders: Map<string, WorkOrder>): ScheduledWorkOrder {
@@ -117,16 +153,15 @@ export class ReflowService implements IReflowService {
     const result: WorkOrder[] = [];
     const visited: Set<string> = new Set();
     const visiting: Set<string> = new Set();
+    const visitPath: string[] = [];
     const woMap = new Map<string, WorkOrder>();
 
-    // Check for duplicate work order IDs
     for (const wo of workOrders) {
       if (woMap.has(wo.docId)) {
         throw new Error(`Duplicate work order ID found: ${wo.docId}`);
       }
       woMap.set(wo.docId, wo);
     }
-    // Validate that all dependencies exist in the work orders
     for (const wo of workOrders) {
       for (const depId of wo.data.dependsOnWorkOrderIds) {
         if (depId && !woMap.has(depId)) {
@@ -136,13 +171,17 @@ export class ReflowService implements IReflowService {
     }
     const dfs = (id: string) => {
       if (visited.has(id)) return;
-      if (visiting.has(id)) throw new Error(`Circular dependency detected in work order chain: WO id: ${id}`);
+      if (visiting.has(id)) {
+        const cycleStart = visitPath.indexOf(id);
+        const cycle = [...visitPath.slice(cycleStart), id];
+        throw new Error(`Circular dependency detected: ${cycle.join(' -> ')}. WO id: ${id}`);
+      }
       visiting.add(id);
+      visitPath.push(id);
       const wo = woMap.get(id);
-      if (!wo) throw new Error(`Work order not found: ${id}`); // Should not happen due to validation above
-      // Skip maintenance work orders entirely;
-      // it should not be part of the chain as per assumption; read @reflow/types.ts
+      if (!wo) throw new Error(`Work order not found: ${id}`);
       if (wo.data.isMaintenance) {
+        visitPath.pop();
         visiting.delete(id);
         visited.add(id);
         return;
@@ -150,12 +189,12 @@ export class ReflowService implements IReflowService {
       for (const depId of wo.data.dependsOnWorkOrderIds.filter(Boolean)) {
         dfs(depId);
       }
+      visitPath.pop();
       visiting.delete(id);
       visited.add(id);
       result.push(wo);
     };
 
-    // Only process non-maintenance work orders
     workOrders.filter((wo) => !wo.data.isMaintenance).forEach((wo) => dfs(wo.docId));
     return result;
   }

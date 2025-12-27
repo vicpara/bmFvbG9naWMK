@@ -25,7 +25,7 @@
     "expectedExplanation": ["Work order rescheduled to next available shift"]
   },
   "maintenance-conflict-scenario": {
-    "description": "Work order conflicts with maintenance window and gets rescheduled to after maintenance",
+    "description": "Work order splits around maintenance window and spans multiple shifts",
     "workCenter": "maintenance-conflict-center",
     "workOrders": ["conflict-work-order"],
     "manufacturingOrder": "standard-manufacturing-order",
@@ -34,8 +34,8 @@
         "workOrderId": "wo-conflict-001",
         "originalStartDate": "2024-01-01T08:00:00Z",
         "originalEndDate": "2024-01-01T16:30:00Z",
-        "newStartDate": "2024-01-01T12:00:00Z",
-        "newEndDate": "2024-01-01T17:00:00Z",
+        "newStartDate": "2024-01-01T08:00:00Z",
+        "newEndDate": "2024-01-02T10:30:00Z",
         "reason": []
       }
     ],

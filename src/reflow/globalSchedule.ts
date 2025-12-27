@@ -28,7 +28,7 @@ export class GlobalSchedule {
   // Check if desired start time is in a valid shift
   private validateInitialSchedule(startDate: string, workCenter: WorkCenter, explanation: string[]): void {
     const dayOfWeek = DateTime.fromISO(startDate).weekday % 7;
-    const hasShiftOnStartDay = workCenter.data.shifts.some(s => s.dayOfWeek === dayOfWeek);
+    const hasShiftOnStartDay = workCenter.data.shifts.some((s) => s.dayOfWeek === dayOfWeek);
     if (!hasShiftOnStartDay) {
       explanation.push('No shift available on initial date');
     }
@@ -37,7 +37,7 @@ export class GlobalSchedule {
   // Find all conflicts (maintenance windows + existing events) for a shift period
   private findConflictsForShift(workCenter: WorkCenter, shiftStart: DateTime, shiftEnd: DateTime): Conflict[] {
     // Get maintenance windows that overlap with this shift
-    const maintenanceWindows = workCenter.data.maintenanceWindows.filter(mw => {
+    const maintenanceWindows = workCenter.data.maintenanceWindows.filter((mw) => {
       const mwStart = DateTime.fromISO(mw.startDate).toUTC();
       const mwEnd = DateTime.fromISO(mw.endDate).toUTC();
       return mwEnd > shiftStart && mwStart < shiftEnd;
@@ -64,13 +64,18 @@ export class GlobalSchedule {
   }
 
   // Calculate available time slots within a shift, accounting for conflicts
-  private findAvailableSlots(shiftInterval: any, conflicts: Conflict[], currentTime: DateTime, explanation: string[]): TimeSlot[] {
+  private findAvailableSlots(
+    shiftInterval: any,
+    conflicts: Conflict[],
+    currentTime: DateTime,
+    explanation: string[]
+  ): TimeSlot[] {
     const availableSlots: TimeSlot[] = [];
     let lastEnd = shiftInterval.startDate;
 
     // Check if current time conflicts with maintenance
-    const currentTimeConflicts = conflicts.some(conflict =>
-      conflict.startDate <= currentTime && conflict.endDate > currentTime
+    const currentTimeConflicts = conflicts.some(
+      (conflict) => conflict.startDate <= currentTime && conflict.endDate > currentTime
     );
 
     if (currentTimeConflicts) {
@@ -84,7 +89,7 @@ export class GlobalSchedule {
         if (slotStart < conflict.startDate) {
           availableSlots.push({
             start: slotStart,
-            end: conflict.startDate
+            end: conflict.startDate,
           });
         }
       }
@@ -97,7 +102,7 @@ export class GlobalSchedule {
       if (slotStart < shiftInterval.endDate) {
         availableSlots.push({
           start: slotStart,
-          end: shiftInterval.endDate
+          end: shiftInterval.endDate,
         });
       }
     }
@@ -124,7 +129,8 @@ export class GlobalSchedule {
       if (slotDuration <= 0) continue;
 
       // Calculate how much time we can actually work in this slot
-      const isNewSession = sessions.length === 0 || DateTime.fromISO(sessions[sessions.length - 1].endDate) < slot.start;
+      const isNewSession =
+        sessions.length === 0 || DateTime.fromISO(sessions[sessions.length - 1].endDate) < slot.start;
       const setupTime = isNewSession ? workOrder.data.setupTimeMinutes : 0;
       const availableWorkTime = Math.max(0, slotDuration - setupTime);
 
@@ -172,7 +178,9 @@ export class GlobalSchedule {
   private updateWorkOrderTiming(workOrder: WorkOrder, sessions: Session[]): void {
     workOrder.data.sessions = sessions;
     workOrder.data.startDate = DateTime.fromISO(sessions[0].startDate).toUTC().toISO({ suppressMilliseconds: true })!;
-    workOrder.data.endDate = DateTime.fromISO(sessions[sessions.length - 1].endDate).toUTC().toISO({ suppressMilliseconds: true })!;
+    workOrder.data.endDate = DateTime.fromISO(sessions[sessions.length - 1].endDate)
+      .toUTC()
+      .toISO({ suppressMilliseconds: true })!;
   }
 
   addWorkOrder(workOrder: WorkOrder) {
@@ -186,11 +194,11 @@ export class GlobalSchedule {
     this.validateInitialSchedule(workOrder.data.startDate, workCenter, explanation);
     const sessions: Session[] = [];
 
-
-    while (remainingDuration > 0 && currentTime < DateTime.fromISO(workOrder.data.startDate).plus({ days: this.MAX_DAYS_LOOKAHEAD })) {
+    while (
+      remainingDuration > 0 &&
+      currentTime < DateTime.fromISO(workOrder.data.startDate).plus({ days: this.MAX_DAYS_LOOKAHEAD })
+    ) {
       const shiftInterval = getNextShiftInterval(workCenter, currentTime);
-      const initialRemaining = remainingDuration;
-
       if (shiftInterval.startDate > currentTime) {
         // Move to next shift
         currentTime = shiftInterval.startDate;
@@ -199,12 +207,10 @@ export class GlobalSchedule {
       // Get all conflicts for this shift
       const shiftConflicts = this.findConflictsForShift(workCenter, shiftInterval.startDate, shiftInterval.endDate);
 
-      // Check if work order's proposed time overlaps with any conflict - push to after if so
-      const totalNeeded = remainingDuration + (sessions.length === 0 ? workOrder.data.setupTimeMinutes : 0);
-      const proposedEnd = currentTime.plus({ minutes: totalNeeded });
-      const overlappingConflict = shiftConflicts.find(c => currentTime < c.endDate && proposedEnd > c.startDate);
-      if (overlappingConflict) {
-        currentTime = overlappingConflict.endDate;
+      // If current time is inside a conflict, move past it
+      const activeConflict = shiftConflicts.find((c) => currentTime >= c.startDate && currentTime < c.endDate);
+      if (activeConflict) {
+        currentTime = activeConflict.endDate;
       }
 
       // Find available time slots within this shift
@@ -212,15 +218,15 @@ export class GlobalSchedule {
 
       // Try to schedule work in available slots
       const schedulingResult = this.scheduleWorkInSlots(
-        availableSlots, workOrder, workCenter, sessions, remainingDuration, currentTime
+        availableSlots,
+        workOrder,
+        workCenter,
+        sessions,
+        remainingDuration,
+        currentTime
       );
       remainingDuration = schedulingResult.remainingDuration;
       currentTime = schedulingResult.currentTime;
-
-      // If we scheduled something in this conflicted shift, stop here for rescheduling
-      if (shiftConflicts.length > 0 && remainingDuration < initialRemaining) {
-        break;
-      }
 
       if (remainingDuration > 0) {
         // Move to next shift
@@ -232,7 +238,7 @@ export class GlobalSchedule {
 
     return {
       workOrder,
-      explanation
+      explanation,
     };
   }
 }

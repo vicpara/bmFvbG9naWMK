@@ -27,7 +27,9 @@ export interface WorkCenter extends Document {
   };
 }
 
-// Manufacturing Order document
+// Manufacturing Order document - for "context"
+// This object doesn't seem to impact the reflow algorithm, but it's used to provide context for the algorithm.
+// Ignored throughout this implementation. Most likely used for the initial WO scheduling.
 export interface ManufacturingOrder extends Document {
   docType: 'manufacturingOrder';
   data: {
@@ -38,7 +40,12 @@ export interface ManufacturingOrder extends Document {
   };
 }
 
+// I'm introducing sessions to track work that happens across multiple shifts.
+// start and end date are insufficient to track multi-shift work.
 export interface Session {
+  // @assumption, each time a session is started, it requires a mandatory setup time,
+  // each time. This is true even when a shift ends with a WO and starts with the same WO.
+  // Of course, ideally this would be configurable at WO/MO level
   setupTimeMinutes: number;
   durationTimeMinutes: number;
   startDate: string;

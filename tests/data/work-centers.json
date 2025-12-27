@@ -1,0 +1,81 @@
+{
+  "standard-work-center": {
+    "docId": "wc-001",
+    "docType": "workCenter",
+    "data": {
+      "name": "Standard Work Center",
+      "shifts": [
+        { "dayOfWeek": 1, "startHour": 8, "endHour": 17 },
+        { "dayOfWeek": 2, "startHour": 8, "endHour": 17 },
+        { "dayOfWeek": 3, "startHour": 8, "endHour": 17 },
+        { "dayOfWeek": 4, "startHour": 8, "endHour": 17 },
+        { "dayOfWeek": 5, "startHour": 8, "endHour": 17 }
+      ],
+      "maintenanceWindows": []
+    }
+  },
+  "weekend-work-center": {
+    "docId": "wc-002",
+    "docType": "workCenter",
+    "data": {
+      "name": "Weekend Work Center",
+      "shifts": [
+        { "dayOfWeek": 0, "startHour": 9, "endHour": 18 },
+        { "dayOfWeek": 6, "startHour": 9, "endHour": 18 }
+      ],
+      "maintenanceWindows": []
+    }
+  },
+  "maintenance-conflict-center": {
+    "docId": "wc-003",
+    "docType": "workCenter",
+    "data": {
+      "name": "Maintenance Conflict Center",
+      "shifts": [
+        { "dayOfWeek": 1, "startHour": 8, "endHour": 17 },
+        { "dayOfWeek": 2, "startHour": 8, "endHour": 17 }
+      ],
+      "maintenanceWindows": [
+        {
+          "startDate": "2024-01-01T10:00:00Z",
+          "endDate": "2024-01-01T12:00:00Z",
+          "reason": "Scheduled maintenance"
+        }
+      ]
+    }
+  },
+  "partial-shift-maintenance": {
+    "docId": "wc-004",
+    "docType": "workCenter",
+    "data": {
+      "name": "Partial Shift Maintenance",
+      "shifts": [
+        { "dayOfWeek": 1, "startHour": 8, "endHour": 17 }
+      ],
+      "maintenanceWindows": [
+        {
+          "startDate": "2024-01-01T08:00:00Z",
+          "endDate": "2024-01-01T10:00:00Z",
+          "reason": "Morning maintenance"
+        }
+      ]
+    }
+  },
+  "full-shift-maintenance": {
+    "docId": "wc-005",
+    "docType": "workCenter",
+    "data": {
+      "name": "Full Shift Maintenance",
+      "shifts": [
+        { "dayOfWeek": 1, "startHour": 8, "endHour": 17 }
+      ],
+      "maintenanceWindows": [
+        {
+          "startDate": "2024-01-01T08:00:00Z",
+          "endDate": "2024-01-01T17:00:00Z",
+          "reason": "Full day maintenance"
+        }
+      ]
+    }
+  }
+}

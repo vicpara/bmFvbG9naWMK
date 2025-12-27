@@ -1,0 +1,32 @@
+{
+  "standard-manufacturing-order": {
+    "docId": "mo-001",
+    "docType": "manufacturingOrder",
+    "data": {
+      "manufacturingOrderNumber": "MO001",
+      "itemId": "ITEM001",
+      "quantity": 100,
+      "dueDate": "2024-01-15T17:00:00Z"
+    }
+  },
+  "urgent-manufacturing-order": {
+    "docId": "mo-002",
+    "docType": "manufacturingOrder",
+    "data": {
+      "manufacturingOrderNumber": "MO002",
+      "itemId": "ITEM002",
+      "quantity": 50,
+      "dueDate": "2024-01-02T17:00:00Z"
+    }
+  },
+  "large-manufacturing-order": {
+    "docId": "mo-003",
+    "docType": "manufacturingOrder",
+    "data": {
+      "manufacturingOrderNumber": "MO003",
+      "itemId": "ITEM003",
+      "quantity": 1000,
+      "dueDate": "2024-01-30T17:00:00Z"
+    }
+  }
+}

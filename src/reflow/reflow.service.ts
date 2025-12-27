@@ -81,36 +81,29 @@ export class ReflowService implements IReflowService {
       },
       DateTime.fromISO(workOrder.data.startDate).toUTC()
     );
-
     const needsReschedulingDueToDeps = earliestStart > DateTime.fromISO(workOrder.data.startDate).toUTC();
 
     if (workOrder.data.isMaintenance && !needsReschedulingDueToDeps) {
       return { workOrder: { ...workOrder }, wasRescheduled: false };
     }
-
     if (needsReschedulingDueToDeps) {
       workOrder.data.startDate = earliestStart.toISO({ suppressMilliseconds: true })!;
-    }
-
-    if (this.isScheduleValid(workOrder, workCenter) && !needsReschedulingDueToDeps) {
-      return { workOrder: { ...workOrder }, wasRescheduled: false };
     }
 
     try {
       const result = this.globalSchedule.addWorkOrder(workOrder);
       const wasRescheduled = result.workOrder.data.startDate !== originalDates.startDate ||
                             result.workOrder.data.endDate !== originalDates.endDate;
-
       if (wasRescheduled) {
+        const reason = needsReschedulingDueToDeps ? ['Rescheduled due to conflicts'] : result.explanation;
         const change: ReflowChange = {
           workOrderId: workOrder.docId,
           originalStartDate: originalDates.startDate,
           originalEndDate: originalDates.endDate,
           newStartDate: result.workOrder.data.startDate,
           newEndDate: result.workOrder.data.endDate,
-          reason: result.explanation,
+          reason,
         };
-
         return {
           workOrder: result.workOrder,
           wasRescheduled: true,
@@ -118,7 +111,6 @@ export class ReflowService implements IReflowService {
           explanation: ['Work order rescheduled to next available shift'],
         };
       }
-
       return {
         workOrder: result.workOrder,
         wasRescheduled: false,

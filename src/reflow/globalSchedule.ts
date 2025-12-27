@@ -199,9 +199,12 @@ export class GlobalSchedule {
       // Get all conflicts for this shift
       const shiftConflicts = this.findConflictsForShift(workCenter, shiftInterval.startDate, shiftInterval.endDate);
 
-      // For rescheduling, start after the last conflict
-      if (shiftConflicts.length > 0) {
-        currentTime = DateTime.max(currentTime, shiftConflicts[shiftConflicts.length - 1].endDate);
+      // Check if work order's proposed time overlaps with any conflict - push to after if so
+      const totalNeeded = remainingDuration + (sessions.length === 0 ? workOrder.data.setupTimeMinutes : 0);
+      const proposedEnd = currentTime.plus({ minutes: totalNeeded });
+      const overlappingConflict = shiftConflicts.find(c => currentTime < c.endDate && proposedEnd > c.startDate);
+      if (overlappingConflict) {
+        currentTime = overlappingConflict.endDate;
       }
 
       // Find available time slots within this shift

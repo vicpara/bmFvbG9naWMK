@@ -31,11 +31,11 @@ describe('ReflowService', () => {
     it('should not change work order when there is no conflict with maintenance windows', () => {
       const scenario = testData.scenarios['no-conflict-scenario'];
       const workOrders = scenario.workOrders.map((id: string) => testData.workOrders[id]);
-      const manufacturingOrder = testData.manufacturingOrders[scenario.manufacturingOrder];
+      const manufacturingOrders = [testData.manufacturingOrders[scenario.manufacturingOrder]];
 
       const input: ReflowInput = {
         workOrders,
-        manufacturingOrders: [manufacturingOrder],
+        manufacturingOrders,
       };
 
       const result = reflowService.reflow(input);
@@ -56,11 +56,11 @@ describe('ReflowService', () => {
     it('should reschedule work order when work center has no shift for initial date', () => {
       const scenario = testData.scenarios['shift-conflict-scenario'];
       const workOrders = scenario.workOrders.map((id: string) => testData.workOrders[id]);
-      const manufacturingOrder = testData.manufacturingOrders[scenario.manufacturingOrder];
+      const manufacturingOrders = [testData.manufacturingOrders[scenario.manufacturingOrder]];
 
       const input: ReflowInput = {
         workOrders,
-        manufacturingOrders: [manufacturingOrder],
+        manufacturingOrders,
       };
 
       const result = reflowService.reflow(input);
@@ -86,11 +86,11 @@ describe('ReflowService', () => {
     it('should reschedule work order when it conflicts with maintenance window', () => {
       const scenario = testData.scenarios['maintenance-conflict-scenario'];
       const workOrders = scenario.workOrders.map((id: string) => testData.workOrders[id]);
-      const manufacturingOrder = testData.manufacturingOrders[scenario.manufacturingOrder];
+      const manufacturingOrders = [testData.manufacturingOrders[scenario.manufacturingOrder]];
 
       const input: ReflowInput = {
         workOrders,
-        manufacturingOrders: [manufacturingOrder],
+        manufacturingOrders,
       };
 
       const result = reflowService.reflow(input);
@@ -114,11 +114,11 @@ describe('ReflowService', () => {
     it('should handle partial fit after maintenance window', () => {
       const scenario = testData.scenarios['partial-fit-scenario'];
       const workOrders = scenario.workOrders.map((id: string) => testData.workOrders[id]);
-      const manufacturingOrder = testData.manufacturingOrders[scenario.manufacturingOrder];
+      const manufacturingOrders = [testData.manufacturingOrders[scenario.manufacturingOrder]];
 
       const input: ReflowInput = {
         workOrders,
-        manufacturingOrders: [manufacturingOrder],
+        manufacturingOrders,
       };
 
       const result = reflowService.reflow(input);
@@ -142,11 +142,11 @@ describe('ReflowService', () => {
     it('should reschedule to next shift when full shift is blocked by maintenance', () => {
       const scenario = testData.scenarios['full-shift-blocked-scenario'];
       const workOrders = scenario.workOrders.map((id: string) => testData.workOrders[id]);
-      const manufacturingOrder = testData.manufacturingOrders[scenario.manufacturingOrder];
+      const manufacturingOrders = [testData.manufacturingOrders[scenario.manufacturingOrder]];
 
       const input: ReflowInput = {
         workOrders,
-        manufacturingOrders: [manufacturingOrder],
+        manufacturingOrders,
       };
 
       const result = reflowService.reflow(input);
@@ -170,11 +170,11 @@ describe('ReflowService', () => {
 
   describe('Edge cases', () => {
     it('should handle empty work orders array', () => {
-      const manufacturingOrder = testData.manufacturingOrders['standard-manufacturing-order'];
+      const manufacturingOrders = [testData.manufacturingOrders['standard-manufacturing-order']];
 
       const input: ReflowInput = {
         workOrders: [],
-        manufacturingOrders: [manufacturingOrder],
+        manufacturingOrders,
       };
 
       const result = reflowService.reflow(input);
@@ -186,11 +186,11 @@ describe('ReflowService', () => {
 
     it('should handle multiple work orders with different priorities', () => {
       const workOrders = [testData.workOrders['standard-work-order'], testData.workOrders['maintenance-work-order']];
-      const manufacturingOrder = testData.manufacturingOrders['standard-manufacturing-order'];
+      const manufacturingOrders = [testData.manufacturingOrders['standard-manufacturing-order']];
 
       const input: ReflowInput = {
         workOrders,
-        manufacturingOrders: [manufacturingOrder],
+        manufacturingOrders,
       };
 
       const result = reflowService.reflow(input);

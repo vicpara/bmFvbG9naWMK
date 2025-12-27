@@ -988,6 +988,258 @@
     "expectedOrder": ["wo-a", "wo-b", "wo-c", "wo-d", "wo-e"],
     "shouldPass": true
   },
+  "dependency-on-nonexistent-wo": {
+    "description": "Work order depends on a non-existent work order ID",
+    "workOrders": [
+      {
+        "docId": "wo-b",
+        "docType": "workOrder",
+        "data": {
+          "workOrderNumber": "WO-B",
+          "manufacturingOrderId": "mo-001",
+          "workCenterId": "wc-001",
+          "durationMinutes": 120,
+          "setupTimeMinutes": 15,
+          "startDate": "2024-01-01T08:00:00Z",
+          "endDate": "2024-01-01T10:00:00Z",
+          "sessions": [],
+          "isMaintenance": false,
+          "dependsOnWorkOrderIds": ["wo-nonexistent"]
+        }
+      },
+      {
+        "docId": "wo-a",
+        "docType": "workOrder",
+        "data": {
+          "workOrderNumber": "WO-A",
+          "manufacturingOrderId": "mo-001",
+          "workCenterId": "wc-001",
+          "durationMinutes": 120,
+          "setupTimeMinutes": 15,
+          "startDate": "2024-01-01T08:00:00Z",
+          "endDate": "2024-01-01T10:00:00Z",
+          "sessions": [],
+          "isMaintenance": false,
+          "dependsOnWorkOrderIds": []
+        }
+      }
+    ],
+    "expectedOrder": [],
+    "shouldPass": false,
+    "expectedError": "Work order wo-b depends on non-existent work order: wo-nonexistent"
+  },
+  "dependency-on-maintenance-wo": {
+    "description": "Regular work order depends on maintenance work order",
+    "workOrders": [
+      {
+        "docId": "wo-b",
+        "docType": "workOrder",
+        "data": {
+          "workOrderNumber": "WO-B",
+          "manufacturingOrderId": "mo-001",
+          "workCenterId": "wc-001",
+          "durationMinutes": 120,
+          "setupTimeMinutes": 15,
+          "startDate": "2024-01-01T08:00:00Z",
+          "endDate": "2024-01-01T10:00:00Z",
+          "sessions": [],
+          "isMaintenance": false,
+          "dependsOnWorkOrderIds": ["wo-maint"]
+        }
+      },
+      {
+        "docId": "wo-maint",
+        "docType": "workOrder",
+        "data": {
+          "workOrderNumber": "WO-MAINT",
+          "manufacturingOrderId": "mo-001",
+          "workCenterId": "wc-001",
+          "durationMinutes": 120,
+          "setupTimeMinutes": 15,
+          "startDate": "2024-01-01T08:00:00Z",
+          "endDate": "2024-01-01T10:00:00Z",
+          "sessions": [],
+          "isMaintenance": true,
+          "dependsOnWorkOrderIds": []
+        }
+      }
+    ],
+    "expectedOrder": ["wo-b"],
+    "shouldPass": true
+  },
+  "maintenance-depends-on-regular": {
+    "description": "Maintenance work order depends on regular work order",
+    "workOrders": [
+      {
+        "docId": "wo-maint",
+        "docType": "workOrder",
+        "data": {
+          "workOrderNumber": "WO-MAINT",
+          "manufacturingOrderId": "mo-001",
+          "workCenterId": "wc-001",
+          "durationMinutes": 120,
+          "setupTimeMinutes": 15,
+          "startDate": "2024-01-01T08:00:00Z",
+          "endDate": "2024-01-01T10:00:00Z",
+          "sessions": [],
+          "isMaintenance": true,
+          "dependsOnWorkOrderIds": ["wo-a"]
+        }
+      },
+      {
+        "docId": "wo-a",
+        "docType": "workOrder",
+        "data": {
+          "workOrderNumber": "WO-A",
+          "manufacturingOrderId": "mo-001",
+          "workCenterId": "wc-001",
+          "durationMinutes": 120,
+          "setupTimeMinutes": 15,
+          "startDate": "2024-01-01T08:00:00Z",
+          "endDate": "2024-01-01T10:00:00Z",
+          "sessions": [],
+          "isMaintenance": false,
+          "dependsOnWorkOrderIds": []
+        }
+      }
+    ],
+    "expectedOrder": ["wo-a"],
+    "shouldPass": true
+  },
+  "duplicate-wo-ids": {
+    "description": "Duplicate work order IDs in input array",
+    "workOrders": [
+      {
+        "docId": "wo-a",
+        "docType": "workOrder",
+        "data": {
+          "workOrderNumber": "WO-A1",
+          "manufacturingOrderId": "mo-001",
+          "workCenterId": "wc-001",
+          "durationMinutes": 120,
+          "setupTimeMinutes": 15,
+          "startDate": "2024-01-01T08:00:00Z",
+          "endDate": "2024-01-01T10:00:00Z",
+          "sessions": [],
+          "isMaintenance": false,
+          "dependsOnWorkOrderIds": []
+        }
+      },
+      {
+        "docId": "wo-a",
+        "docType": "workOrder",
+        "data": {
+          "workOrderNumber": "WO-A2",
+          "manufacturingOrderId": "mo-001",
+          "workCenterId": "wc-001",
+          "durationMinutes": 120,
+          "setupTimeMinutes": 15,
+          "startDate": "2024-01-01T08:00:00Z",
+          "endDate": "2024-01-01T10:00:00Z",
+          "sessions": [],
+          "isMaintenance": false,
+          "dependsOnWorkOrderIds": []
+        }
+      }
+    ],
+    "expectedOrder": [],
+    "shouldPass": false,
+    "expectedError": "Duplicate work order ID found: wo-a"
+  },
+  "empty-dependency-strings": {
+    "description": "Work order with empty strings in dependency array",
+    "workOrders": [
+      {
+        "docId": "wo-b",
+        "docType": "workOrder",
+        "data": {
+          "workOrderNumber": "WO-B",
+          "manufacturingOrderId": "mo-001",
+          "workCenterId": "wc-001",
+          "durationMinutes": 120,
+          "setupTimeMinutes": 15,
+          "startDate": "2024-01-01T08:00:00Z",
+          "endDate": "2024-01-01T10:00:00Z",
+          "sessions": [],
+          "isMaintenance": false,
+          "dependsOnWorkOrderIds": ["", "wo-a", ""]
+        }
+      },
+      {
+        "docId": "wo-a",
+        "docType": "workOrder",
+        "data": {
+          "workOrderNumber": "WO-A",
+          "manufacturingOrderId": "mo-001",
+          "workCenterId": "wc-001",
+          "durationMinutes": 120,
+          "setupTimeMinutes": 15,
+          "startDate": "2024-01-01T08:00:00Z",
+          "endDate": "2024-01-01T10:00:00Z",
+          "sessions": [],
+          "isMaintenance": false,
+          "dependsOnWorkOrderIds": []
+        }
+      }
+    ],
+    "expectedOrder": ["wo-a", "wo-b"],
+    "shouldPass": true
+  },
+  "complex-cycle-with-maintenance": {
+    "description": "Cycle involving maintenance work orders: A -> Maint -> B -> A",
+    "workOrders": [
+      {
+        "docId": "wo-a",
+        "docType": "workOrder",
+        "data": {
+          "workOrderNumber": "WO-A",
+          "manufacturingOrderId": "mo-001",
+          "workCenterId": "wc-001",
+          "durationMinutes": 120,
+          "setupTimeMinutes": 15,
+          "startDate": "2024-01-01T08:00:00Z",
+          "endDate": "2024-01-01T10:00:00Z",
+          "sessions": [],
+          "isMaintenance": false,
+          "dependsOnWorkOrderIds": ["wo-b"]
+        }
+      },
+      {
+        "docId": "wo-maint",
+        "docType": "workOrder",
+        "data": {
+          "workOrderNumber": "WO-MAINT",
+          "manufacturingOrderId": "mo-001",
+          "workCenterId": "wc-001",
+          "durationMinutes": 120,
+          "setupTimeMinutes": 15,
+          "startDate": "2024-01-01T08:00:00Z",
+          "endDate": "2024-01-01T10:00:00Z",
+          "sessions": [],
+          "isMaintenance": true,
+          "dependsOnWorkOrderIds": ["wo-a"]
+        }
+      },
+      {
+        "docId": "wo-b",
+        "docType": "workOrder",
+        "data": {
+          "workOrderNumber": "WO-B",
+          "manufacturingOrderId": "mo-001",
+          "workCenterId": "wc-001",
+          "durationMinutes": 120,
+          "setupTimeMinutes": 15,
+          "startDate": "2024-01-01T08:00:00Z",
+          "endDate": "2024-01-01T10:00:00Z",
+          "sessions": [],
+          "isMaintenance": false,
+          "dependsOnWorkOrderIds": []
+        }
+      }
+    ],
+    "expectedOrder": ["wo-b", "wo-a"],
+    "shouldPass": true
+  },
   "empty-array": {
     "description": "Empty array of work orders",
     "workOrders": [],

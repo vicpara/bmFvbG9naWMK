@@ -197,6 +197,56 @@ describe('topologicalSort for WorkOrders', () => {
         ReflowService.topologicalSort(scenario.workOrders);
       }).toThrow(scenario.expectedError);
     });
+
+    it('should throw error for dependency on non-existent work order', () => {
+      const scenario = testData['dependency-on-nonexistent-wo'];
+      expect(() => {
+        ReflowService.topologicalSort(scenario.workOrders);
+      }).toThrow(scenario.expectedError);
+    });
+
+    it('should handle dependency on maintenance work order (dependency ignored)', () => {
+      const scenario = testData['dependency-on-maintenance-wo'];
+      const result = ReflowService.topologicalSort(scenario.workOrders);
+
+      const resultIds = result.map((wo) => wo.docId);
+      expect(resultIds).toEqual(scenario.expectedOrder);
+      expect(result).toHaveLength(scenario.expectedOrder.length);
+    });
+
+    it('should handle maintenance work order depending on regular work order', () => {
+      const scenario = testData['maintenance-depends-on-regular'];
+      const result = ReflowService.topologicalSort(scenario.workOrders);
+
+      const resultIds = result.map((wo) => wo.docId);
+      expect(resultIds).toEqual(scenario.expectedOrder);
+      expect(result).toHaveLength(scenario.expectedOrder.length);
+    });
+
+    it('should throw error for duplicate work order IDs', () => {
+      const scenario = testData['duplicate-wo-ids'];
+      expect(() => {
+        ReflowService.topologicalSort(scenario.workOrders);
+      }).toThrow(scenario.expectedError);
+    });
+
+    it('should handle empty strings in dependency arrays', () => {
+      const scenario = testData['empty-dependency-strings'];
+      const result = ReflowService.topologicalSort(scenario.workOrders);
+
+      const resultIds = result.map((wo) => wo.docId);
+      expect(resultIds).toEqual(scenario.expectedOrder);
+      expect(result).toHaveLength(scenario.expectedOrder.length);
+    });
+
+    it('should handle complex cycle involving maintenance work orders', () => {
+      const scenario = testData['complex-cycle-with-maintenance'];
+      const result = ReflowService.topologicalSort(scenario.workOrders);
+
+      const resultIds = result.map((wo) => wo.docId);
+      expect(resultIds).toEqual(scenario.expectedOrder);
+      expect(result).toHaveLength(scenario.expectedOrder.length);
+    });
   });
 
   describe('topological ordering properties', () => {
@@ -218,9 +268,9 @@ describe('topologicalSort for WorkOrders', () => {
     });
 
     it('should only include non-maintenance work orders', () => {
-      const allWorkOrders = Object.values(testData).flatMap((scenario) => scenario.workOrders || []);
-
-      const result = ReflowService.topologicalSort(allWorkOrders);
+      // Use a specific scenario that includes both maintenance and non-maintenance work orders
+      const scenario = testData['mixed-maintenance'];
+      const result = ReflowService.topologicalSort(scenario.workOrders);
 
       result.forEach((wo) => {
         expect(wo.data.isMaintenance).toBe(false);

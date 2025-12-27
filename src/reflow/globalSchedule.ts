@@ -1,6 +1,7 @@
 import type { ScheduledEvent, WorkCenter, WorkOrder, Conflict, TimeSlot, Session } from './types';
 import { getDayKey, getNextShiftInterval } from '../utils/date';
 import { DateTime } from 'luxon';
+import { Validator } from './validator';
 
 export class GlobalSchedule {
   // A Map of WC ids to a Map of day keys to a list of scheduled events.
@@ -234,11 +235,9 @@ export class GlobalSchedule {
       }
     }
 
+    Validator.postSchedule(workOrder, sessions, remainingDuration, this.MAX_DAYS_LOOKAHEAD);
+    Validator.sessionsNoOverlap(sessions);
     this.updateWorkOrderTiming(workOrder, sessions);
-
-    return {
-      workOrder,
-      explanation,
-    };
+    return { workOrder, explanation };
   }
 }

@@ -9,6 +9,7 @@ import type {
   WorkOrder,
 } from './types';
 import { GlobalSchedule } from './globalSchedule';
+import { Validator } from './validator';
 
 export class ReflowService implements IReflowService {
   private workCenters: Map<string, WorkCenter>;
@@ -18,13 +19,6 @@ export class ReflowService implements IReflowService {
     this.workCenters = new Map(workCenters.map((wc) => [wc.docId, wc])); // for O(1) lookups
     this.globalSchedule = new GlobalSchedule(workCenters);
   }
-
-  private getWorkCenter(workCenterId: string): WorkCenter {
-    const workCenter = this.workCenters.get(workCenterId);
-    if (!workCenter) throw new Error(`Work center ${workCenterId} not found`);
-    return workCenter;
-  }
-
 
   reflow(input: ReflowInput): ReflowResult {
     const sortedNonMaintenanceWOs = ReflowService.topologicalSort(input.workOrders);
@@ -68,21 +62,17 @@ export class ReflowService implements IReflowService {
   }
 
   private scheduleWorkOrder(workOrder: WorkOrder, scheduledWorkOrders: Map<string, WorkOrder>): ScheduledWorkOrder {
-    const workCenter = this.getWorkCenter(workOrder.data.workCenterId);
+    Validator.preSchedule(workOrder, this.workCenters);
     const originalDates = { startDate: workOrder.data.startDate, endDate: workOrder.data.endDate };
-
-    // Max end time of dependencies - ensures temporal constraints
     const earliestStart = workOrder.data.dependsOnWorkOrderIds.reduce(
       (maxDate, parentId) => {
         const parent = scheduledWorkOrders.get(parentId);
-        return parent
-          ? DateTime.max(maxDate, DateTime.fromISO(parent.data.endDate).toUTC())
-          : maxDate;
+        return parent ? DateTime.max(maxDate, DateTime.fromISO(parent.data.endDate).toUTC()) : maxDate;
       },
       DateTime.fromISO(workOrder.data.startDate).toUTC()
     );
     const needsReschedulingDueToDeps = earliestStart > DateTime.fromISO(workOrder.data.startDate).toUTC();
-
+    Validator.maintenanceNotReschedulable(workOrder, needsReschedulingDueToDeps);
     if (workOrder.data.isMaintenance && !needsReschedulingDueToDeps) {
       return { workOrder: { ...workOrder }, wasRescheduled: false };
     }
@@ -122,43 +112,6 @@ export class ReflowService implements IReflowService {
       throw error;
     }
   }
-
-  private isScheduleValid(workOrder: WorkOrder, workCenter: WorkCenter): boolean {
-    const startDate = DateTime.fromISO(workOrder.data.startDate).toUTC();
-    const endDate = DateTime.fromISO(workOrder.data.endDate).toUTC();
-
-    // Check if start time is within a shift
-    const dayOfWeek = startDate.weekday % 7;
-    const shift = workCenter.data.shifts.find(s => s.dayOfWeek === dayOfWeek);
-    if (!shift) return false;
-
-    const shiftStart = startDate.startOf('day').plus({ hours: shift.startHour });
-    const shiftEnd = startDate.startOf('day').plus({ hours: shift.endHour });
-
-    if (startDate < shiftStart || endDate > shiftEnd) return false;
-
-    // Check for maintenance window conflicts
-    const hasMaintenanceConflict = workCenter.data.maintenanceWindows.some(mw => {
-      const mwStart = DateTime.fromISO(mw.startDate).toUTC();
-      const mwEnd = DateTime.fromISO(mw.endDate).toUTC();
-      return (startDate < mwEnd && endDate > mwStart);
-    });
-
-    if (hasMaintenanceConflict) return false;
-
-    // Check for conflicts with existing scheduled events
-    const dayKey = Math.floor(startDate.toUTC().startOf('day').toMillis() / (24 * 60 * 60 * 1000));
-    const existingEvents = this.globalSchedule.getScheduledEvents(workCenter.docId, dayKey);
-
-    const hasEventConflict = existingEvents.some(event => {
-      const eventStart = DateTime.fromISO(event.startDate).toUTC();
-      const eventEnd = DateTime.fromISO(event.endDate).toUTC();
-      return (startDate < eventEnd && endDate > eventStart);
-    });
-
-    return !hasEventConflict;
-  }
-
   // DFS for topological sort with cycle detection - non-maintenance WOs only as per assumption
   static topologicalSort(workOrders: WorkOrder[]): WorkOrder[] {
     const result: WorkOrder[] = [];

@@ -53,6 +53,8 @@ export interface Session {
 }
 
 // Work Order document
+// @assumption, a WorkOrder chain can only have all WO with isMaintenance set to true or false. It cannot be a mix of both.
+// It actually doesn't make sense. A WO cannot both depend on a previous WOs and have a fixed start and end date and cannot be rescheduled based on dependants.
 export interface WorkOrder extends Document {
   docType: 'workOrder';
   data: {

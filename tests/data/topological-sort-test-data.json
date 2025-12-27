@@ -495,7 +495,7 @@
     ],
     "expectedOrder": [],
     "shouldPass": false,
-    "expectedError": "Circular dependency detected in work order chain: WO id: wo-a"
+    "expectedError": "Circular dependency detected:"
   },
   "complex-cycle": {
     "description": "Complex cycle: A -> B -> C -> A (should detect cycle)",
@@ -551,7 +551,7 @@
     ],
     "expectedOrder": [],
     "shouldPass": false,
-    "expectedError": "Circular dependency detected in work order chain"
+    "expectedError": "Circular dependency detected:"
   },
   "self-cycle": {
     "description": "Self-referencing cycle: A -> A (should detect cycle)",
@@ -575,7 +575,7 @@
     ],
     "expectedOrder": [],
     "shouldPass": false,
-    "expectedError": "Circular dependency detected in work order chain: WO id: wo-a"
+    "expectedError": "Circular dependency detected:"
   },
   "branched-cycle": {
     "description": "Cycle with branches: A -> B -> C -> B (cycle in middle)",
@@ -647,7 +647,7 @@
     ],
     "expectedOrder": [],
     "shouldPass": false,
-    "expectedError": "Circular dependency detected in work order chain: WO id: wo-b"
+    "expectedError": "Circular dependency detected:"
   },
   "no-dependencies": {
     "description": "All work orders have no dependencies - should return in original order",

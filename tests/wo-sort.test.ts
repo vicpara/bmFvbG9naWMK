@@ -172,7 +172,7 @@ describe('topologicalSort for WorkOrders', () => {
 
       expect(() => {
         ReflowService.topologicalSort(scenario.workOrders);
-      }).toThrow('Circular dependency detected in work order chain');
+      }).toThrow(scenario.expectedError);
     });
 
     it('should detect self-cycle: A -> A', () => {

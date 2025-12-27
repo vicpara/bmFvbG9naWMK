@@ -1,6 +1,7 @@
 import type { ScheduledEvent, WorkCenter, WorkOrder, Conflict, TimeSlot, Session } from './types';
 import { getDayKey, getNextShiftInterval } from '../utils/date';
 import { DateTime } from 'luxon';
+import { Validator, createConstraintContext, type ScheduleConstraintContext } from './validator';
 
 export class GlobalSchedule {
   // A Map of WC ids to a Map of day keys to a list of scheduled events.
@@ -188,8 +189,11 @@ export class GlobalSchedule {
     if (!workCenter) throw new Error(`Work center ${workOrder.data.workCenterId} not found`);
 
     const explanation: string[] = [];
+    const constraintCtx = createConstraintContext();
+    constraintCtx.requiredMinutes = workOrder.data.durationMinutes + workOrder.data.setupTimeMinutes;
     let currentTime = DateTime.fromISO(workOrder.data.startDate).toUTC();
     let remainingDuration = workOrder.data.durationMinutes;
+    let shiftsFound = false;
 
     this.validateInitialSchedule(workOrder.data.startDate, workCenter, explanation);
     const sessions: Session[] = [];
@@ -199,24 +203,25 @@ export class GlobalSchedule {
       currentTime < DateTime.fromISO(workOrder.data.startDate).plus({ days: this.MAX_DAYS_LOOKAHEAD })
     ) {
       const shiftInterval = getNextShiftInterval(workCenter, currentTime);
+      shiftsFound = true;
       if (shiftInterval.startDate > currentTime) {
-        // Move to next shift
         currentTime = shiftInterval.startDate;
       }
 
-      // Get all conflicts for this shift
       const shiftConflicts = this.findConflictsForShift(workCenter, shiftInterval.startDate, shiftInterval.endDate);
+      this.trackConflicts(shiftConflicts, workCenter, constraintCtx);
 
-      // If current time is inside a conflict, move past it
       const activeConflict = shiftConflicts.find((c) => currentTime >= c.startDate && currentTime < c.endDate);
       if (activeConflict) {
         currentTime = activeConflict.endDate;
       }
 
-      // Find available time slots within this shift
       const availableSlots = this.findAvailableSlots(shiftInterval, shiftConflicts, currentTime, explanation);
+      constraintCtx.totalAvailableMinutes += availableSlots.reduce(
+        (sum, slot) => sum + slot.end.diff(slot.start, 'minutes').minutes,
+        0
+      );
 
-      // Try to schedule work in available slots
       const schedulingResult = this.scheduleWorkInSlots(
         availableSlots,
         workOrder,
@@ -229,16 +234,34 @@ export class GlobalSchedule {
       currentTime = schedulingResult.currentTime;
 
       if (remainingDuration > 0) {
-        // Move to next shift
         currentTime = shiftInterval.endDate;
       }
     }
 
+    constraintCtx.noShiftsAvailable = !shiftsFound;
+    constraintCtx.allTimeBlocked = shiftsFound && constraintCtx.totalAvailableMinutes === 0;
+    Validator.postSchedule(workOrder, sessions, remainingDuration, this.MAX_DAYS_LOOKAHEAD, constraintCtx);
+    Validator.sessionsNoOverlap(sessions);
     this.updateWorkOrderTiming(workOrder, sessions);
+    return { workOrder, explanation };
+  }
 
-    return {
-      workOrder,
-      explanation,
-    };
+  private trackConflicts(
+    conflicts: Conflict[],
+    workCenter: WorkCenter,
+    ctx: ScheduleConstraintContext
+  ): void {
+    for (const conflict of conflicts) {
+      const maintenanceMatch = workCenter.data.maintenanceWindows.find(
+        (mw) =>
+          DateTime.fromISO(mw.startDate).toMillis() === conflict.startDate.toMillis() &&
+          DateTime.fromISO(mw.endDate).toMillis() === conflict.endDate.toMillis()
+      );
+      if (maintenanceMatch) {
+        if (!ctx.maintenanceConflicts.some((m) => m.startDate === maintenanceMatch.startDate)) {
+          ctx.maintenanceConflicts.push(maintenanceMatch);
+        }
+      }
+    }
   }
 }

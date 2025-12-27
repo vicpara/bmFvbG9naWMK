@@ -1,7 +1,11 @@
-import type { IReflowService, ReflowInput, ReflowResult } from './types';
+import type { IReflowService, ReflowInput, ReflowResult, WorkCenter } from './types';
 
 export class ReflowService implements IReflowService {
-  constructor() {}
+  private workCenters: Map<string, WorkCenter>;
+  constructor(workCenters: WorkCenter[]) {
+    this.workCenters = new Map(workCenters.map((wc) => [wc.docId, wc]));
+  }
+
   reflow(input: ReflowInput): ReflowResult {
     console.log('ReflowService.reflow', input);
     return {

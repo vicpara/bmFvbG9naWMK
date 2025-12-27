@@ -9,13 +9,13 @@
       "durationMinutes": 480,
       "setupTimeMinutes": 30,
       "startDate": "2024-01-01T08:00:00Z",
-      "endDate": "2024-01-01T17:00:00Z",
+      "endDate": "2024-01-01T16:30:00Z",
       "sessions": [
         {
           "setupTimeMinutes": 30,
-          "durationTimeMinutes": 450,
+          "durationTimeMinutes": 480,
           "startDate": "2024-01-01T08:00:00Z",
-          "endDate": "2024-01-01T17:00:00Z"
+          "endDate": "2024-01-01T16:30:00Z"
         }
       ],
       "isMaintenance": false,
@@ -59,7 +59,7 @@
       "sessions": [
         {
           "setupTimeMinutes": 60,
-          "durationTimeMinutes": 420,
+          "durationTimeMinutes": 480,
           "startDate": "2024-01-01T09:00:00Z",
           "endDate": "2024-01-01T18:00:00Z"
         }
@@ -78,13 +78,13 @@
       "durationMinutes": 120,
       "setupTimeMinutes": 15,
       "startDate": "2024-01-01T08:00:00Z",
-      "endDate": "2024-01-01T10:00:00Z",
+      "endDate": "2024-01-01T10:15:00Z",
       "sessions": [
         {
           "setupTimeMinutes": 15,
-          "durationTimeMinutes": 105,
+          "durationTimeMinutes": 120,
           "startDate": "2024-01-01T08:00:00Z",
-          "endDate": "2024-01-01T10:00:00Z"
+          "endDate": "2024-01-01T10:15:00Z"
         }
       ],
       "isMaintenance": false,
@@ -98,16 +98,39 @@
       "workOrderNumber": "WO-LONG001",
       "manufacturingOrderId": "mo-001",
       "workCenterId": "wc-005",
-      "durationMinutes": 960,
+      "durationMinutes": 1440,
       "setupTimeMinutes": 45,
       "startDate": "2024-01-01T08:00:00Z",
-      "endDate": "2024-01-02T08:00:00Z",
+      "endDate": "2024-01-02T08:45:00Z",
       "sessions": [
         {
           "setupTimeMinutes": 45,
-          "durationTimeMinutes": 915,
+          "durationTimeMinutes": 1440,
           "startDate": "2024-01-01T08:00:00Z",
-          "endDate": "2024-01-02T08:00:00Z"
+          "endDate": "2024-01-02T08:45:00Z"
+        }
+      ],
+      "isMaintenance": false,
+      "dependsOnWorkOrderIds": []
+    }
+  },
+  "conflict-work-order": {
+    "docId": "wo-conflict-001",
+    "docType": "workOrder",
+    "data": {
+      "workOrderNumber": "WO-CONFLICT001",
+      "manufacturingOrderId": "mo-001",
+      "workCenterId": "wc-003",
+      "durationMinutes": 480,
+      "setupTimeMinutes": 30,
+      "startDate": "2024-01-01T08:00:00Z",
+      "endDate": "2024-01-01T16:30:00Z",
+      "sessions": [
+        {
+          "setupTimeMinutes": 30,
+          "durationTimeMinutes": 480,
+          "startDate": "2024-01-01T08:00:00Z",
+          "endDate": "2024-01-01T16:30:00Z"
         }
       ],
       "isMaintenance": false,

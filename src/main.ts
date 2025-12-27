@@ -3,10 +3,20 @@ import type { ReflowInput } from './reflow/types.ts';
 import { DateTime } from 'luxon';
 
 export const main = () => {
-  const reflowService = new ReflowService();
+  const reflowService = new ReflowService([
+    {
+      docId: '1',
+      docType: 'workCenter',
+      data: {
+        name: 'Work Center 1',
+        shifts: [],
+        maintenanceWindows: [],
+      },
+    },
+  ]);
   const input: ReflowInput = {
     workOrders: [],
-    manufacturingOrder: {
+    manufacturingOrders: [{
       docId: '1',
       docType: 'manufacturingOrder',
       data: {
@@ -15,7 +25,7 @@ export const main = () => {
         quantity: 1,
         dueDate: DateTime.now().toISO(),
       },
-    },
+    }],
   };
   const result = reflowService.reflow(input);
   console.log('Reflow.result', result);

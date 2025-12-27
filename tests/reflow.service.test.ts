@@ -35,7 +35,7 @@ describe('ReflowService', () => {
 
       const input: ReflowInput = {
         workOrders,
-        manufacturingOrder,
+        manufacturingOrders: [manufacturingOrder],
       };
 
       const result = reflowService.reflow(input);
@@ -60,7 +60,7 @@ describe('ReflowService', () => {
 
       const input: ReflowInput = {
         workOrders,
-        manufacturingOrder,
+        manufacturingOrders: [manufacturingOrder],
       };
 
       const result = reflowService.reflow(input);
@@ -90,7 +90,7 @@ describe('ReflowService', () => {
 
       const input: ReflowInput = {
         workOrders,
-        manufacturingOrder,
+        manufacturingOrders: [manufacturingOrder],
       };
 
       const result = reflowService.reflow(input);
@@ -118,7 +118,7 @@ describe('ReflowService', () => {
 
       const input: ReflowInput = {
         workOrders,
-        manufacturingOrder,
+        manufacturingOrders: [manufacturingOrder],
       };
 
       const result = reflowService.reflow(input);
@@ -146,7 +146,7 @@ describe('ReflowService', () => {
 
       const input: ReflowInput = {
         workOrders,
-        manufacturingOrder,
+        manufacturingOrders: [manufacturingOrder],
       };
 
       const result = reflowService.reflow(input);
@@ -174,7 +174,7 @@ describe('ReflowService', () => {
 
       const input: ReflowInput = {
         workOrders: [],
-        manufacturingOrder,
+        manufacturingOrders: [manufacturingOrder],
       };
 
       const result = reflowService.reflow(input);
@@ -190,7 +190,7 @@ describe('ReflowService', () => {
 
       const input: ReflowInput = {
         workOrders,
-        manufacturingOrder,
+        manufacturingOrders: [manufacturingOrder],
       };
 
       const result = reflowService.reflow(input);

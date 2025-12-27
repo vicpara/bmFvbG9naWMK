@@ -67,7 +67,13 @@
     "data": {
       "name": "Full Shift Maintenance",
       "shifts": [
-        { "dayOfWeek": 1, "startHour": 8, "endHour": 17 }
+        { "dayOfWeek": 0, "startHour": 8, "endHour": 17 },
+        { "dayOfWeek": 1, "startHour": 8, "endHour": 17 },
+        { "dayOfWeek": 2, "startHour": 8, "endHour": 17 },
+        { "dayOfWeek": 3, "startHour": 8, "endHour": 17 },
+        { "dayOfWeek": 4, "startHour": 8, "endHour": 17 },
+        { "dayOfWeek": 5, "startHour": 8, "endHour": 17 },
+        { "dayOfWeek": 6, "startHour": 8, "endHour": 17 }
       ],
       "maintenanceWindows": [
         {

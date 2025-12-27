@@ -281,7 +281,7 @@ describe('topologicalSort for WorkOrders', () => {
       const scenario = testData['simple-chain'];
       const result = ReflowService.topologicalSort(scenario.workOrders);
 
-      result.forEach((sortedWo, index) => {
+      result.forEach((sortedWo) => {
         const originalWo = scenario.workOrders.find((wo) => wo.docId === sortedWo.docId);
         expect(sortedWo).toBe(originalWo); // Same reference
       });

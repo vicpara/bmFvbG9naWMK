@@ -116,6 +116,21 @@ export function main() {
     } else {
       console.log('- No changes were needed');
     }
+
+    console.log('\n=== Optimization Metrics ===');
+    const { metrics } = result;
+    console.log(`Total Delay: ${metrics.totalDelayMinutes} minutes`);
+    console.log(`Work Orders Affected: ${metrics.workOrdersAffectedCount}`);
+    console.log(`Work Orders Unchanged: ${metrics.workOrdersUnchangedCount}`);
+    console.log(`Overall Utilization: ${(metrics.overallUtilization * 100).toFixed(1)}%`);
+    console.log('\nWork Center Metrics:');
+    metrics.workCenterMetrics.forEach((wc) => {
+      console.log(`  ${wc.workCenterName} (${wc.workCenterId}):`);
+      console.log(`    Shift Time: ${wc.totalShiftMinutes} min`);
+      console.log(`    Working Time: ${wc.totalWorkingMinutes} min`);
+      console.log(`    Idle Time: ${wc.totalIdleMinutes} min`);
+      console.log(`    Utilization: ${(wc.utilization * 100).toFixed(1)}%`);
+    });
   } catch (error) {
     console.log('ERROR:', error instanceof Error ? error.message : String(error));
   }

@@ -1,4 +1,4 @@
-import type { ScheduledEvent, WorkCenter, WorkOrder, Conflict, TimeSlot, Session } from './types';
+import type { ScheduledEvent, WorkCenter, WorkOrder, Conflict, TimeSlot, Session, WorkCenterMetrics } from './types';
 import { getDayKey, getNextShiftInterval } from '../utils/date';
 import { DateTime } from 'luxon';
 import { Validator, createConstraintContext, type ScheduleConstraintContext } from './validator';
@@ -263,5 +263,72 @@ export class GlobalSchedule {
         }
       }
     }
+  }
+
+  computeWorkCenterMetrics(startDate: DateTime, endDate: DateTime): WorkCenterMetrics[] {
+    const metrics: WorkCenterMetrics[] = [];
+    for (const [wcId, wc] of this.workCenters) {
+      const totalShiftMinutes = this.computeTotalShiftMinutes(wc, startDate, endDate);
+      const totalWorkingMinutes = this.computeTotalWorkingMinutes(wcId, startDate, endDate);
+      const totalIdleMinutes = Math.max(0, totalShiftMinutes - totalWorkingMinutes);
+      metrics.push({
+        workCenterId: wcId,
+        workCenterName: wc.data.name,
+        totalShiftMinutes,
+        totalWorkingMinutes,
+        totalIdleMinutes,
+        utilization: totalShiftMinutes > 0 ? totalWorkingMinutes / totalShiftMinutes : 0,
+      });
+    }
+    return metrics;
+  }
+
+  private computeTotalShiftMinutes(wc: WorkCenter, startDate: DateTime, endDate: DateTime): number {
+    let totalMinutes = 0;
+    let current = startDate.toUTC().startOf('day');
+    const end = endDate.toUTC();
+    while (current < end) {
+      const dayOfWeek = current.weekday % 7;
+      const shift = wc.data.shifts.find((s) => s.dayOfWeek === dayOfWeek);
+      if (shift) {
+        const shiftStart = current.plus({ hours: shift.startHour });
+        const shiftEnd = current.plus({ hours: shift.endHour });
+        const effectiveStart = DateTime.max(shiftStart, startDate);
+        const effectiveEnd = DateTime.min(shiftEnd, end);
+        if (effectiveStart < effectiveEnd) {
+          let shiftMinutes = effectiveEnd.diff(effectiveStart, 'minutes').minutes;
+          for (const mw of wc.data.maintenanceWindows) {
+            const mwStart = DateTime.fromISO(mw.startDate).toUTC();
+            const mwEnd = DateTime.fromISO(mw.endDate).toUTC();
+            if (mwEnd > effectiveStart && mwStart < effectiveEnd) {
+              const overlapStart = DateTime.max(mwStart, effectiveStart);
+              const overlapEnd = DateTime.min(mwEnd, effectiveEnd);
+              shiftMinutes -= overlapEnd.diff(overlapStart, 'minutes').minutes;
+            }
+          }
+          totalMinutes += Math.max(0, shiftMinutes);
+        }
+      }
+      current = current.plus({ days: 1 });
+    }
+    return totalMinutes;
+  }
+
+  private computeTotalWorkingMinutes(wcId: string, startDate: DateTime, endDate: DateTime): number {
+    let totalMinutes = 0;
+    const wcSchedule = this.scheduledEvents.get(wcId);
+    if (!wcSchedule) return 0;
+    for (const [, events] of wcSchedule) {
+      for (const event of events) {
+        const eventStart = DateTime.fromISO(event.startDate).toUTC();
+        const eventEnd = DateTime.fromISO(event.endDate).toUTC();
+        if (eventEnd > startDate && eventStart < endDate) {
+          const effectiveStart = DateTime.max(eventStart, startDate);
+          const effectiveEnd = DateTime.min(eventEnd, endDate);
+          totalMinutes += effectiveEnd.diff(effectiveStart, 'minutes').minutes;
+        }
+      }
+    }
+    return totalMinutes;
   }
 }

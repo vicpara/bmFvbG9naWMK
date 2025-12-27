@@ -95,6 +95,7 @@ export interface ReflowResult {
   updatedWorkOrders: WorkOrder[];
   changes: ReflowChange[];
   explanation: string[];
+  metrics: OptimizationMetrics;
 }
 
 export interface ScheduledWorkOrder {
@@ -133,4 +134,21 @@ export interface Conflict {
 export interface TimeSlot {
   start: DateTime;
   end: DateTime;
+}
+
+export interface WorkCenterMetrics {
+  workCenterId: string;
+  workCenterName: string;
+  totalShiftMinutes: number;
+  totalWorkingMinutes: number;
+  totalIdleMinutes: number;
+  utilization: number; // 0-1 ratio
+}
+
+export interface OptimizationMetrics {
+  totalDelayMinutes: number;
+  workOrdersAffectedCount: number;
+  workOrdersUnchangedCount: number;
+  overallUtilization: number; // 0-1 ratio
+  workCenterMetrics: WorkCenterMetrics[];
 }

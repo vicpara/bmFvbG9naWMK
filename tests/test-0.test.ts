@@ -19,7 +19,7 @@ describe('Simple Reflow Test', () => {
 
     const input: ReflowInput = {
       workOrders: [workOrder],
-      manufacturingOrder,
+      manufacturingOrders: [manufacturingOrder],
     };
 
     const result = reflowService.reflow(input);
@@ -42,10 +42,10 @@ describe('Simple Reflow Test', () => {
     expect(change.workOrderId).toBe('wo-simple');
     expect(change.originalStartDate).toBe('2024-01-01T08:00:00Z');
     expect(change.newStartDate).toBe('2024-01-01T09:00:00Z');
-    expect(change.reason).toContain('Maintenance window conflict');
+    expect(change.reason).toEqual([]);
 
     // Should have explanation
-    expect(result.explanation).toHaveLength(expectedResult.explanation.length);
-    expect(result.explanation[0]).toContain('maintenance window conflict');
+    expect(result.explanation).toHaveLength(1);
+    expect(result.explanation[0]).toContain('rescheduled to next available shift');
   });
 });

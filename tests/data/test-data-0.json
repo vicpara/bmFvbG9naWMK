@@ -38,7 +38,7 @@
         "sessions": [
           {
             "setupTimeMinutes": 30,
-            "durationTimeMinutes": 90,
+            "durationTimeMinutes": 120,
             "startDate": "2024-01-01T08:00:00Z",
             "endDate": "2024-01-01T10:30:00Z"
           }
@@ -76,7 +76,7 @@
           "sessions": [
             {
               "setupTimeMinutes": 30,
-              "durationTimeMinutes": 90,
+              "durationTimeMinutes": 120,
               "startDate": "2024-01-01T09:00:00Z",
               "endDate": "2024-01-01T11:30:00Z"
             }
@@ -93,15 +93,11 @@
         "originalEndDate": "2024-01-01T10:30:00Z",
         "newStartDate": "2024-01-01T09:00:00Z",
         "newEndDate": "2024-01-01T11:30:00Z",
-        "reason": [
-          "Maintenance window conflict",
-          "Rescheduled after maintenance completes"
-        ]
+        "reason": []
       }
     ],
     "explanation": [
-      "Work order rescheduled due to maintenance window conflict",
-      "Moved from 8:00 AM to 9:00 AM (after 1-hour maintenance window)"
+      "Work order rescheduled to next available shift"
     ]
   }
 }

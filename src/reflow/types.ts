@@ -1,3 +1,5 @@
+import type { DateTime } from "luxon";
+
 // Base document structure
 export interface Document {
   docId: string;
@@ -5,6 +7,11 @@ export interface Document {
   data: Record<string, any>;
 }
 
+export interface Shift {
+  dayOfWeek: number; // 0-6, Sunday = 0
+  startHour: number; // 0-23
+  endHour: number; // 0-23
+}
 // Work Center document
 export interface WorkCenter extends Document {
   docType: 'workCenter';
@@ -12,11 +19,7 @@ export interface WorkCenter extends Document {
     name: string;
 
     // Shifts
-    shifts: Array<{
-      dayOfWeek: number; // 0-6, Sunday = 0
-      startHour: number; // 0-23
-      endHour: number; // 0-23
-    }>;
+    shifts: Array<Shift>;
 
     // Maintenance windows (blocked time periods)
     maintenanceWindows: Array<{
@@ -25,6 +28,11 @@ export interface WorkCenter extends Document {
       reason?: string; // Optional description
     }>;
   };
+}
+
+export interface ShiftInterval {
+  startDate: DateTime;
+  endDate: DateTime;
 }
 
 // Manufacturing Order document - for "context"
@@ -53,6 +61,8 @@ export interface Session {
 }
 
 // Work Order document
+// @assumption, a WorkOrder chain can only have all WO with isMaintenance set to true or false. It cannot be a mix of both.
+// It actually doesn't make sense. A WO cannot both depend on a previous WOs and have a fixed start and end date and cannot be rescheduled based on dependants.
 export interface WorkOrder extends Document {
   docType: 'workOrder';
   data: {
@@ -78,13 +88,20 @@ export interface WorkOrder extends Document {
 // Reflow algorithm input/output types
 export interface ReflowInput {
   workOrders: WorkOrder[];
-  manufacturingOrder: ManufacturingOrder;
+  manufacturingOrders: ManufacturingOrder[];
 }
 
 export interface ReflowResult {
   updatedWorkOrders: WorkOrder[];
   changes: ReflowChange[];
   explanation: string[];
+}
+
+export interface ScheduledWorkOrder {
+  workOrder: WorkOrder;
+  wasRescheduled: boolean;
+  change?: ReflowChange;
+  explanation?: string[];
 }
 
 export interface ReflowChange {
@@ -98,4 +115,22 @@ export interface ReflowChange {
 
 export interface IReflowService {
   reflow(input: ReflowInput): ReflowResult;
+}
+
+export interface ScheduledEvent extends Session {
+  workOrderId: string;
+  workCenterId: string;
+  manufacturingOrderId: string;
+  isMaintenance: boolean;
+}
+
+// Internal scheduling types for GlobalSchedule
+export interface Conflict {
+  startDate: DateTime;
+  endDate: DateTime;
+}
+
+export interface TimeSlot {
+  start: DateTime;
+  end: DateTime;
 }

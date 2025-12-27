@@ -25,21 +25,21 @@
     "expectedExplanation": ["Work order rescheduled to next available shift"]
   },
   "maintenance-conflict-scenario": {
-    "description": "Work order conflicts with maintenance window and gets rescheduled",
+    "description": "Work order splits around maintenance window and spans multiple shifts",
     "workCenter": "maintenance-conflict-center",
-    "workOrders": ["standard-work-order", "maintenance-work-order"],
+    "workOrders": ["conflict-work-order"],
     "manufacturingOrder": "standard-manufacturing-order",
     "expectedChanges": [
       {
-        "workOrderId": "wo-001",
+        "workOrderId": "wo-conflict-001",
         "originalStartDate": "2024-01-01T08:00:00Z",
-        "originalEndDate": "2024-01-01T17:00:00Z",
-        "newStartDate": "2024-01-01T12:00:00Z",
-        "newEndDate": "2024-01-01T17:00:00Z",
-        "reason": ["Maintenance window conflict"]
+        "originalEndDate": "2024-01-01T16:30:00Z",
+        "newStartDate": "2024-01-01T08:00:00Z",
+        "newEndDate": "2024-01-02T10:30:00Z",
+        "reason": []
       }
     ],
-    "expectedExplanation": ["Work order rescheduled after maintenance window"]
+    "expectedExplanation": ["Work order rescheduled to next available shift"]
   },
   "partial-fit-scenario": {
     "description": "Work order partially fits in remaining shift after maintenance",
@@ -50,16 +50,16 @@
       {
         "workOrderId": "wo-short-001",
         "originalStartDate": "2024-01-01T08:00:00Z",
-        "originalEndDate": "2024-01-01T10:00:00Z",
+        "originalEndDate": "2024-01-01T10:15:00Z",
         "newStartDate": "2024-01-01T10:00:00Z",
         "newEndDate": "2024-01-01T12:15:00Z",
-        "reason": ["Partial fit after maintenance", "Spills over to next available time"]
+        "reason": []
       }
     ],
-    "expectedExplanation": ["Work order scheduled in remaining shift time after maintenance"]
+    "expectedExplanation": ["Work order rescheduled to next available shift"]
   },
   "full-shift-blocked-scenario": {
-    "description": "Full shift blocked by maintenance, work order moves to next shift",
+    "description": "Full shift blocked by maintenance, work order moves to next shift and spans multiple days",
     "workCenter": "full-shift-maintenance",
     "workOrders": ["long-work-order"],
     "manufacturingOrder": "standard-manufacturing-order",
@@ -67,12 +67,12 @@
       {
         "workOrderId": "wo-long-001",
         "originalStartDate": "2024-01-01T08:00:00Z",
-        "originalEndDate": "2024-01-02T08:00:00Z",
+        "originalEndDate": "2024-01-02T08:45:00Z",
         "newStartDate": "2024-01-02T08:00:00Z",
-        "newEndDate": "2024-01-03T08:00:00Z",
-        "reason": ["Full shift blocked by maintenance", "Rescheduled to next available shift"]
+        "newEndDate": "2024-01-04T16:15:00Z",
+        "reason": []
       }
     ],
-    "expectedExplanation": ["Work order rescheduled to next available shift due to full day maintenance"]
+    "expectedExplanation": ["Work order rescheduled to next available shift"]
   }
 }

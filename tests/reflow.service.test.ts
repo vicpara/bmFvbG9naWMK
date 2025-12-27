@@ -311,4 +311,248 @@ describe('ReflowService', () => {
     });
   });
 
+  describe('Optimization Metrics', () => {
+    it('should return metrics with result', () => {
+      const workOrder: WorkOrder = {
+        docId: 'wo-metrics-1',
+        docType: 'workOrder',
+        data: {
+          workOrderNumber: 'WO-METRICS-1',
+          manufacturingOrderId: 'mo-test',
+          workCenterId: 'wc-metrics',
+          durationMinutes: 60,
+          setupTimeMinutes: 0,
+          startDate: '2024-01-01T08:00:00Z',
+          endDate: '2024-01-01T09:00:00Z',
+          sessions: [],
+          isMaintenance: false,
+          dependsOnWorkOrderIds: [],
+        },
+      };
+      const workCenter: WorkCenter = {
+        docId: 'wc-metrics',
+        docType: 'workCenter',
+        data: {
+          name: 'Metrics Test Center',
+          shifts: [{ dayOfWeek: 1, startHour: 8, endHour: 17 }],
+          maintenanceWindows: [],
+        },
+      };
+      const mo: ManufacturingOrder = {
+        docId: 'mo-test',
+        docType: 'manufacturingOrder',
+        data: { manufacturingOrderNumber: 'MO-TEST', itemId: 'ITEM', quantity: 1, dueDate: '2024-01-15T17:00:00Z' },
+      };
+      const service = new ReflowService([workCenter]);
+      const result = service.reflow({ workOrders: [workOrder], manufacturingOrders: [mo] });
+      expect(result.metrics).toBeDefined();
+      expect(result.metrics.workOrdersAffectedCount).toBe(0);
+      expect(result.metrics.workOrdersUnchangedCount).toBe(1);
+      expect(result.metrics.totalDelayMinutes).toBe(0);
+      expect(result.metrics.workCenterMetrics).toHaveLength(1);
+    });
+
+    it('should calculate total delay when work orders are rescheduled', () => {
+      const workCenter: WorkCenter = {
+        docId: 'wc-delay',
+        docType: 'workCenter',
+        data: {
+          name: 'Delay Test Center',
+          shifts: [{ dayOfWeek: 1, startHour: 8, endHour: 17 }],
+          maintenanceWindows: [{ startDate: '2024-01-01T08:00:00Z', endDate: '2024-01-01T10:00:00Z' }],
+        },
+      };
+      const workOrder: WorkOrder = {
+        docId: 'wo-delay',
+        docType: 'workOrder',
+        data: {
+          workOrderNumber: 'WO-DELAY',
+          manufacturingOrderId: 'mo-test',
+          workCenterId: 'wc-delay',
+          durationMinutes: 60,
+          setupTimeMinutes: 0,
+          startDate: '2024-01-01T08:00:00Z',
+          endDate: '2024-01-01T09:00:00Z',
+          sessions: [],
+          isMaintenance: false,
+          dependsOnWorkOrderIds: [],
+        },
+      };
+      const mo: ManufacturingOrder = {
+        docId: 'mo-test',
+        docType: 'manufacturingOrder',
+        data: { manufacturingOrderNumber: 'MO-TEST', itemId: 'ITEM', quantity: 1, dueDate: '2024-01-15T17:00:00Z' },
+      };
+      const service = new ReflowService([workCenter]);
+      const result = service.reflow({ workOrders: [workOrder], manufacturingOrders: [mo] });
+      expect(result.metrics.workOrdersAffectedCount).toBe(1);
+      expect(result.metrics.workOrdersUnchangedCount).toBe(0);
+      expect(result.metrics.totalDelayMinutes).toBe(120); // moved from 9:00 end to 11:00 end
+    });
+
+    it('should calculate utilization correctly', () => {
+      const workCenter: WorkCenter = {
+        docId: 'wc-util',
+        docType: 'workCenter',
+        data: {
+          name: 'Utilization Test Center',
+          shifts: [{ dayOfWeek: 1, startHour: 8, endHour: 12 }], // 4 hours = 240 min
+          maintenanceWindows: [],
+        },
+      };
+      const workOrder: WorkOrder = {
+        docId: 'wo-util',
+        docType: 'workOrder',
+        data: {
+          workOrderNumber: 'WO-UTIL',
+          manufacturingOrderId: 'mo-test',
+          workCenterId: 'wc-util',
+          durationMinutes: 120, // 2 hours
+          setupTimeMinutes: 0,
+          startDate: '2024-01-01T08:00:00Z',
+          endDate: '2024-01-01T10:00:00Z',
+          sessions: [],
+          isMaintenance: false,
+          dependsOnWorkOrderIds: [],
+        },
+      };
+      const mo: ManufacturingOrder = {
+        docId: 'mo-test',
+        docType: 'manufacturingOrder',
+        data: { manufacturingOrderNumber: 'MO-TEST', itemId: 'ITEM', quantity: 1, dueDate: '2024-01-15T17:00:00Z' },
+      };
+      const service = new ReflowService([workCenter]);
+      const result = service.reflow({ workOrders: [workOrder], manufacturingOrders: [mo] });
+      const wcMetrics = result.metrics.workCenterMetrics.find((m) => m.workCenterId === 'wc-util');
+      expect(wcMetrics).toBeDefined();
+      expect(wcMetrics!.totalWorkingMinutes).toBe(120);
+      expect(wcMetrics!.totalShiftMinutes).toBe(120); // schedule bounds: 8:00-10:00
+      expect(wcMetrics!.totalIdleMinutes).toBe(0);
+      expect(wcMetrics!.utilization).toBeCloseTo(1, 2);
+    });
+
+    it('should calculate idle time when work center has gaps', () => {
+      const workCenter: WorkCenter = {
+        docId: 'wc-idle',
+        docType: 'workCenter',
+        data: {
+          name: 'Idle Test Center',
+          shifts: [{ dayOfWeek: 1, startHour: 8, endHour: 17 }], // 9 hours = 540 min
+          maintenanceWindows: [],
+        },
+      };
+      const wo1: WorkOrder = {
+        docId: 'wo-idle-1',
+        docType: 'workOrder',
+        data: {
+          workOrderNumber: 'WO-IDLE-1',
+          manufacturingOrderId: 'mo-test',
+          workCenterId: 'wc-idle',
+          durationMinutes: 60,
+          setupTimeMinutes: 0,
+          startDate: '2024-01-01T08:00:00Z',
+          endDate: '2024-01-01T09:00:00Z',
+          sessions: [],
+          isMaintenance: false,
+          dependsOnWorkOrderIds: [],
+        },
+      };
+      const wo2: WorkOrder = {
+        docId: 'wo-idle-2',
+        docType: 'workOrder',
+        data: {
+          workOrderNumber: 'WO-IDLE-2',
+          manufacturingOrderId: 'mo-test',
+          workCenterId: 'wc-idle',
+          durationMinutes: 60,
+          setupTimeMinutes: 0,
+          startDate: '2024-01-01T14:00:00Z',
+          endDate: '2024-01-01T15:00:00Z',
+          sessions: [],
+          isMaintenance: false,
+          dependsOnWorkOrderIds: [],
+        },
+      };
+      const mo: ManufacturingOrder = {
+        docId: 'mo-test',
+        docType: 'manufacturingOrder',
+        data: { manufacturingOrderNumber: 'MO-TEST', itemId: 'ITEM', quantity: 1, dueDate: '2024-01-15T17:00:00Z' },
+      };
+      const service = new ReflowService([workCenter]);
+      const result = service.reflow({ workOrders: [wo1, wo2], manufacturingOrders: [mo] });
+      const wcMetrics = result.metrics.workCenterMetrics.find((m) => m.workCenterId === 'wc-idle');
+      expect(wcMetrics).toBeDefined();
+      expect(wcMetrics!.totalWorkingMinutes).toBe(120); // 2 work orders * 60 min
+      expect(wcMetrics!.totalShiftMinutes).toBe(420); // 8:00-15:00 = 7 hours
+      expect(wcMetrics!.totalIdleMinutes).toBe(300); // 5 hours idle between 9:00-14:00
+      expect(wcMetrics!.utilization).toBeCloseTo(120 / 420, 2);
+    });
+
+    it('should handle multiple work centers', () => {
+      const wc1: WorkCenter = {
+        docId: 'wc-multi-1',
+        docType: 'workCenter',
+        data: {
+          name: 'Multi WC 1',
+          shifts: [{ dayOfWeek: 1, startHour: 8, endHour: 12 }],
+          maintenanceWindows: [],
+        },
+      };
+      const wc2: WorkCenter = {
+        docId: 'wc-multi-2',
+        docType: 'workCenter',
+        data: {
+          name: 'Multi WC 2',
+          shifts: [{ dayOfWeek: 1, startHour: 8, endHour: 12 }],
+          maintenanceWindows: [],
+        },
+      };
+      const wo1: WorkOrder = {
+        docId: 'wo-multi-1',
+        docType: 'workOrder',
+        data: {
+          workOrderNumber: 'WO-MULTI-1',
+          manufacturingOrderId: 'mo-test',
+          workCenterId: 'wc-multi-1',
+          durationMinutes: 120,
+          setupTimeMinutes: 0,
+          startDate: '2024-01-01T08:00:00Z',
+          endDate: '2024-01-01T10:00:00Z',
+          sessions: [],
+          isMaintenance: false,
+          dependsOnWorkOrderIds: [],
+        },
+      };
+      const wo2: WorkOrder = {
+        docId: 'wo-multi-2',
+        docType: 'workOrder',
+        data: {
+          workOrderNumber: 'WO-MULTI-2',
+          manufacturingOrderId: 'mo-test',
+          workCenterId: 'wc-multi-2',
+          durationMinutes: 60,
+          setupTimeMinutes: 0,
+          startDate: '2024-01-01T08:00:00Z',
+          endDate: '2024-01-01T09:00:00Z',
+          sessions: [],
+          isMaintenance: false,
+          dependsOnWorkOrderIds: [],
+        },
+      };
+      const mo: ManufacturingOrder = {
+        docId: 'mo-test',
+        docType: 'manufacturingOrder',
+        data: { manufacturingOrderNumber: 'MO-TEST', itemId: 'ITEM', quantity: 1, dueDate: '2024-01-15T17:00:00Z' },
+      };
+      const service = new ReflowService([wc1, wc2]);
+      const result = service.reflow({ workOrders: [wo1, wo2], manufacturingOrders: [mo] });
+      expect(result.metrics.workCenterMetrics).toHaveLength(2);
+      const wc1Metrics = result.metrics.workCenterMetrics.find((m) => m.workCenterId === 'wc-multi-1');
+      const wc2Metrics = result.metrics.workCenterMetrics.find((m) => m.workCenterId === 'wc-multi-2');
+      expect(wc1Metrics!.totalWorkingMinutes).toBe(120);
+      expect(wc2Metrics!.totalWorkingMinutes).toBe(60);
+      // Schedule bounds: 8:00-10:00. WC1: 120min shift, 120 working. WC2: 120min shift, 60 working
+      expect(result.metrics.overallUtilization).toBeCloseTo((120 + 60) / (120 + 120), 2);
+    });
+  });
 });

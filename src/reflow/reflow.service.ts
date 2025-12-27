@@ -1,6 +1,7 @@
 import { DateTime } from 'luxon';
 import type {
   IReflowService,
+  OptimizationMetrics,
   ReflowChange,
   ReflowInput,
   ReflowResult,
@@ -80,13 +81,54 @@ export class ReflowService implements IReflowService {
       throw new ImpossibleScheduleError(violations);
     }
 
+    const sortedWOs = Array.from(updatedWorkOrders.values()).sort(
+      (a, b) => DateTime.fromISO(a.data.startDate).toMillis() - DateTime.fromISO(b.data.startDate).toMillis()
+    );
+    const metrics = this.computeMetrics(input.workOrders, changes, sortedWOs);
+    return { updatedWorkOrders: sortedWOs, changes, explanation: explanations, metrics };
+  }
+
+  private computeMetrics(
+    originalWOs: WorkOrder[],
+    changes: ReflowChange[],
+    updatedWOs: WorkOrder[]
+  ): OptimizationMetrics {
+    const totalDelayMinutes = changes.reduce((sum, change) => {
+      const originalEnd = DateTime.fromISO(change.originalEndDate).toMillis();
+      const newEnd = DateTime.fromISO(change.newEndDate).toMillis();
+      const delayMs = Math.max(0, newEnd - originalEnd);
+      return sum + delayMs / 60000;
+    }, 0);
+    const workOrdersAffectedCount = changes.length;
+    const workOrdersUnchangedCount = originalWOs.length - workOrdersAffectedCount;
+    const { scheduleStart, scheduleEnd } = this.getScheduleBounds(updatedWOs);
+    const workCenterMetrics = this.globalSchedule.computeWorkCenterMetrics(scheduleStart, scheduleEnd);
+    const totalShift = workCenterMetrics.reduce((sum, m) => sum + m.totalShiftMinutes, 0);
+    const totalWorking = workCenterMetrics.reduce((sum, m) => sum + m.totalWorkingMinutes, 0);
+    const overallUtilization = totalShift > 0 ? totalWorking / totalShift : 0;
     return {
-      updatedWorkOrders: Array.from(updatedWorkOrders.values()).sort(
-        (a, b) => DateTime.fromISO(a.data.startDate).toMillis() - DateTime.fromISO(b.data.startDate).toMillis()
-      ),
-      changes,
-      explanation: explanations,
+      totalDelayMinutes,
+      workOrdersAffectedCount,
+      workOrdersUnchangedCount,
+      overallUtilization,
+      workCenterMetrics,
     };
+  }
+
+  private getScheduleBounds(workOrders: WorkOrder[]): { scheduleStart: DateTime; scheduleEnd: DateTime } {
+    if (workOrders.length === 0) {
+      const now = DateTime.utc();
+      return { scheduleStart: now, scheduleEnd: now };
+    }
+    let minStart = DateTime.fromISO(workOrders[0].data.startDate).toUTC();
+    let maxEnd = DateTime.fromISO(workOrders[0].data.endDate).toUTC();
+    for (const wo of workOrders) {
+      const start = DateTime.fromISO(wo.data.startDate).toUTC();
+      const end = DateTime.fromISO(wo.data.endDate).toUTC();
+      if (start < minStart) minStart = start;
+      if (end > maxEnd) maxEnd = end;
+    }
+    return { scheduleStart: minStart, scheduleEnd: maxEnd };
   }
 
   private errorToViolation(error: unknown, wo: WorkOrder): ConstraintViolation {
